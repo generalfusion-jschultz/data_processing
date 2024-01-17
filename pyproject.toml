@@ -1,9 +1,7 @@
 [project]
-name = "project_or_module_name"
+name = "data_processing"
 description = "A_short_description"
 
-# If a project, then you can specify version here
-# version = "0.0.0"
 # If a module, then fetch version dynamically (see [tool.setuptools.dynamic] below)
 dynamic = ["version"]
 
@@ -11,32 +9,29 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {file = "LICENSE"}
 authors = [
-  {email = "matthew@davidson.engineering"},
-  {name = "Matthew Davidson"}
+  {name = "Jason Schultz", email = "jason.schultz@generalfusion.com"}
 ]
 
 classifiers = [
     "Development Status :: 1 - Planning",
     "Operating System :: Microsoft :: Windows",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11"
 ]
 
-# dependencies = [
-#    "numpy",
-#    "my_module @ git+https://github.com/my_github/my_repo.git@tag", 
-# ]
+ dependencies = [
+    "pyYAML",
+    "regex",
+    "datetime", 
+ ]
 
 # If a module, then use fetch version from src/module_name/__init__.py
 [tool.setuptools.dynamic]
 version = {attr = "module0.__version__"}
 
-[project.optional-dependencies]
-test = [
-  "pytest >= 7.1.1",
-]
+# [project.optional-dependencies]
+# test = [
+#   "pytest >= 7.1.1",
+# ]
 
 # [project.urls]
 # homepage = "https://example.com"
