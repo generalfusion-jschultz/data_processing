@@ -133,7 +133,11 @@ class Measurements:
         
         # Use regular expression to remove non-numeric characters
         numeric_string = re.sub(r"[^0-9.]+", "", string)
-        result_float = float(numeric_string)
+        try:
+            result_float = float(numeric_string)
+        except ValueError:
+            logger.warning(f'{numeric_string} cannot be converted to float. Ignoring result')
+            result_float = None
         return result_float
 
 
@@ -141,7 +145,11 @@ class Measurements:
         
         date_fmt = "%Y-%m-%d %H:%M:%S"
         # Assuming value is a string representation of a datetime
-        date = datetime.strptime(value, date_fmt)
+        try:
+            date = datetime.strptime(value, date_fmt)
+        except ValueError:
+            logger.warning(f'{value} cannot be converted to datetime. Ignoring result')
+            date = None
         return date
 
 
