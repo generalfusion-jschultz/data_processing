@@ -186,6 +186,7 @@ class Measurements:
                         # Do not update data. Results in a blank dict which
                         # does not update InfluxDB with the write_metric()
                         # function
+                        logger.info(f'Time of {time} was eiter not found or not updated from previous request.')
                         break
                     else:
                         # New time found, updating time in Measurement object
