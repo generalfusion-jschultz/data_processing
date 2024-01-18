@@ -15,6 +15,25 @@ from datetime import datetime, timezone
 logger = logging.getLogger(__name__)
 
 
+class Shot:
+
+    def __init__(self, tags:dict, start_time:str, stop_time:str):
+        
+        date_fmt = '%Y-%m-%dT%H:%M:%SZ'
+        self.tags = tags
+        self.start_time = datetime.strptime(start_time, date_fmt)
+        self.stop_time = datetime.strptime(stop_time, date_fmt)
+
+    def __lt__(self, other):
+        return self.start_time < other.start_time
+    
+    def __eq__(self, other):
+        return self.start_time == other.start_time
+    
+    def __gt__(self, other):
+        return self.start_time > other.start_time
+
+
 class Shots:
 
     def __init__(self, filepath:str):
@@ -155,7 +174,7 @@ class Measurements:
                     # Converts the scraped time string into datetime object
                     time = self.convert_to_date(value)
                     # Check if updated time scraped is newer than previous
-                    if time == measurement.time:
+                    if (time == measurement.time) or (time is None):
                         # Do not update data. Results in a blank dict which
                         # does not update InfluxDB with the write_metric()
                         # function
