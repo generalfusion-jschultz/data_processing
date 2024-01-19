@@ -44,8 +44,8 @@ class Shots:
         self.shot_list = []
         for shot in list:
             tags = shot['tags']
-            start_time = shot['start_time']
-            stop_time = shot['stop_time']
+            start_time = shot['time']['start']
+            stop_time = shot['time']['stop']
             s = Shot(tags, start_time, stop_time)
             self.shot_list.append(s)
         self.shot_list = sorted(self.shot_list)
