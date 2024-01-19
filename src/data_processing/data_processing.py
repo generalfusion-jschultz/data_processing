@@ -39,21 +39,18 @@ class Shots:
     def __init__(self, filepath:str):
         
         with open(filepath, 'r') as file:
-            self.shot_list = yaml.safe_load(file)['shots']
+            list = yaml.safe_load(file)['shots']
 
-        # Sorting the list based on the start time
-        self.shot_list = sorted(self.shot_list, 
-                                key = lambda x: x['time']['start'])
-        self.list_length = len(self.shot_list)
-
-
-    def get_tags(self, index:int):
-        try:
-            return self.shot_list[index]['tags']
-        except IndexError:
-            logger.debug(
-                f'Index of {index} is out of range (0 to {self.list_length - 1})'
-                )
+        self.shot_list = []
+        for shot in list:
+            tags = shot['tags']
+            start_time = shot['start_time']
+            stop_time = shot['stop_time']
+            s = Shot(tags, start_time, stop_time)
+            self.shot_list.append(s)
+        self.shot_list = sorted(self.shot_list)
+        
+        self.length = len(self.shot_list)
 
 
 class Measurement:
@@ -133,11 +130,8 @@ class Measurements:
         
         # Use regular expression to remove non-numeric characters
         numeric_string = re.sub(r"[^0-9.]+", "", string)
-        try:
-            result_float = float(numeric_string)
-        except ValueError:
-            logger.warning(f'{numeric_string} cannot be converted to float. Ignoring result')
-            result_float = None
+        result_float = float(numeric_string)
+
         return result_float
 
 
@@ -145,11 +139,8 @@ class Measurements:
         
         date_fmt = "%Y-%m-%d %H:%M:%S"
         # Assuming value is a string representation of a datetime
-        try:
-            date = datetime.strptime(value, date_fmt)
-        except ValueError:
-            logger.warning(f'{value} cannot be converted to datetime. Ignoring result')
-            date = None
+        date = datetime.strptime(value, date_fmt)
+
         return date
 
 
@@ -202,9 +193,13 @@ class Measurements:
                         # Check if Measurement object's id matches scraped
                         # data's id
                         if k == key:
-                            # Convert scraped data value to type based on
-                            # template
-                            corrected_value = self.convert_values(value, v)
+                            try:
+                                # Convert scraped data value to type based on
+                                # template
+                                corrected_value = self.convert_values(value, v)
+                            except ValueError:
+                                logger.warning(f'{value} cannot be converted to {v}. Ignoring result')
+                                break
                             # Update the Measurement object's data dict
                             measurement.data.update({k:corrected_value})
 
