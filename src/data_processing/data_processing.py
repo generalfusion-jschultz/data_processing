@@ -208,3 +208,136 @@ class Measurements:
         time = self.measurement_list[index].time
         data = self.measurement_list[index].data
         return data, time
+    
+
+class DataPoint:
+
+    def __init__(self, name:str, value:dict):
+        self.name = name
+        self.data_type = value['data_type']
+        self.value = None
+        self.time = None
+
+        try:
+            self.source_id = value['source_id']
+        except KeyError:
+            self.source_id = name
+
+        try:
+            self.tags = value['tags']
+        except KeyError:
+            self.tags = None
+
+        try:
+            self.time_id = value['source_time']
+        except KeyError:
+            self.time_id = None
+        
+
+class DataList:
+
+    def __init__(self, measurement_filepath:str, shot_filepath:str):
+
+        self.data_list = []  # List of Measurement objects
+        self.id_list = []  # List of ids from all DataPoints
+        self.time_id_list = [] # List of timestamp ids
+        self.timestamps = {}
+
+        # Initializing information for holding data
+        with open(measurement_filepath, "r") as file:
+            data_format = yaml.safe_load(file)
+
+        for key, value in data_format.items():
+            if key == 'timestamps':
+                for element in value:
+                    self.timestamps.update({element: None})
+                    self.time_id_list.append(element)
+            else:  
+                point = DataPoint(key, value)
+                self.data_list.append(point)
+                self.id_list.append(point.source_id)
+
+        self.length = len(self.data_list)
+
+        # Grabbing time and additional tags used from the shot
+        with open(shot_filepath, 'r') as file:
+            shot = yaml.safe_load(file)
+        try:
+            self.shot_tags = shot['tags']
+        except KeyError:
+            self.shot_tags = None
+        date_fmt = '%Y-%m-%dT%H:%M:%SZ'
+        self.shot_start_time_str = shot['time']['start']
+        self.shot_stop_time_str = shot['time']['stop']
+        self.shot_start_time = datetime.strptime(self.shot_start_time_str, date_fmt)
+        self.shot_stop_time = datetime.strptime(self.shot_stop_time_str, date_fmt)
+
+    
+    def convert_to_float(self, string):
+        
+        # Use regular expression to remove non-numeric characters
+        numeric_string = re.sub(r"[^0-9.]+", "", string)
+        result_float = float(numeric_string)
+
+        return result_float
+
+
+    def convert_to_date(self, value):
+        
+        date_fmt = "%Y-%m-%d %H:%M:%S"
+        # Assuming value is a string representation of a datetime
+        date = datetime.strptime(value, date_fmt)
+
+        return date
+
+
+    def convert_values(self, value, value_type):
+
+        if value_type == 'float':
+            return self.convert_to_float(value)
+        elif value_type == 'string':
+            return str(value)
+        else:
+            # Handle other categories as needed
+            return value
+
+
+    def store_data(self, scraped_data:dict, scraped_time:dict):
+        '''
+        Reads in data passed scraped from html based on the full_id_list and 
+        properly stores it into each Measurement object
+        '''
+        # Initialize update flags to false
+        update_flag = {}
+        for time_id, timestamp in self.timestamps.items():
+            update_flag.update({time_id:False})
+
+        # Update timestamps if new and set update flag to true
+        for time_id, timestamp in scraped_time.items():
+            if (timestamp != self.timestamps[time_id]) and (timestamp is not None):
+                update_flag.update({time_id: True})
+                self.timestamps.update({time_id:timestamp})       
+        
+        # Loop for updating all the DataPoints in the list
+        for datapoint in self.data_list:
+            datapoint.value = None 
+            # Update values using current time if timestamp not specified
+            if datapoint.time_id is None:
+                datapoint.time = datetime.now()
+                for value_id, value_data in scraped_data.items():
+                    if value_id == datapoint.source_id:
+                        try:
+                            datapoint.value = self.convert_values(value_data, datapoint.data_type)
+                        except ValueError:
+                            logger.warning(f'{value_data} cannot be converted to {datapoint.data_type}. Ignoring result')
+                        break
+
+            # Update values if update flag is set to True for DataPoint's given timestamp
+            elif (update_flag[datapoint.time_id]):
+                for value_id, value_data in scraped_data.items():
+                    if value_id == datapoint.source_id:
+                        try:
+                            datapoint.value = self.convert_values(value_data, datapoint.data_type)
+                        except ValueError:
+                            logger.warning(f'{value_data} cannot be converted to {datapoint.data_type}. Ignoring result')
+                        break
