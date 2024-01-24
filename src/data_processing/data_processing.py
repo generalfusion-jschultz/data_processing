@@ -271,10 +271,20 @@ class DataList:
         self.shot_stop_time = datetime.strptime(shot['time']['stop'], date_fmt)
         
         # Store the start and stop times as strings converted to UTC for querying
-        self.shot_start_time_str = (self.shot_start_time.astimezone(timezone.utc)).strftime(date_fmt)
-        self.shot_stop_time_str = (self.shot_stop_time.astimezone(timezone.utc)).strftime(date_fmt)
+        self.shot_start_time_query = (self.shot_start_time.astimezone(timezone.utc)).strftime(date_fmt)
+        self.shot_stop_time_query = (self.shot_stop_time.astimezone(timezone.utc)).strftime(date_fmt)
 
     
+    def get_all_tag_id_as_list(self):
+
+        all_tags = self.shot_tags
+        for datapoint in self.data_list:
+            if datapoint.tags is not None:
+                all_tags |= datapoint.tags
+        
+        return list(all_tags.keys())
+
+
     def convert_to_float(self, string):
         
         # Use regular expression to remove non-numeric characters
