@@ -267,10 +267,12 @@ class DataList:
         except KeyError:
             self.shot_tags = None
         date_fmt = '%Y-%m-%dT%H:%M:%SZ'
-        self.shot_start_time_str = shot['time']['start']
-        self.shot_stop_time_str = shot['time']['stop']
-        self.shot_start_time = datetime.strptime(self.shot_start_time_str, date_fmt)
-        self.shot_stop_time = datetime.strptime(self.shot_stop_time_str, date_fmt)
+        self.shot_start_time = datetime.strptime(shot['time']['start'], date_fmt)
+        self.shot_stop_time = datetime.strptime(shot['time']['stop'], date_fmt)
+        
+        # Store the start and stop times as strings converted to UTC for querying
+        self.shot_start_time_str = (self.shot_start_time.astimezone(timezone.utc)).strftime(date_fmt)
+        self.shot_stop_time_str = (self.shot_stop_time.astimezone(timezone.utc)).strftime(date_fmt)
 
     
     def convert_to_float(self, string):
